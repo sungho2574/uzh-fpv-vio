@@ -81,6 +81,18 @@ docker compose run vins-mono bash /root/scripts/run_vins.sh no_loop 0.5
 - `output/no_loop/vins_result_no_loop.csv`
 - `output/loop/vins_result_no_loop.csv` (loop 실행에서도 같이 생성됨, 참고용)
 - `output/loop/vins_result_loop.csv`
+- `output/<variant>/vio_track.mp4` — feature_tracker가 특징점을 그려서 퍼블리시하는
+  `/feature_tracker/feature_img`를 그대로 녹화한 영상
+- `output/<variant>/vio_track_3d.mp4` — 위 영상 우측 하단에 실시간 3D 궤적 +
+  자세(3축 triad, R/G/B = x/y/z) inset을 합성한 영상 (`scripts/record_video.py`가
+  `/vins_estimator/odometry`를 구독해서 그림)
+
+두 영상 모두 `run_vins.sh`가 `roslaunch` 직후 `record_video.py`를 백그라운드로
+띄워서 `rosbag play`가 끝날 때까지 프레임을 받아 녹화하고, 스크립트 종료 시
+자동으로 flush/저장합니다. `matplotlib`이 컨테이너에 없으면 최초 1회 자동
+설치합니다 (vendor Dockerfile을 건드리지 않기 위해 런타임에 설치하는 방식이라,
+`docker compose run`마다 매번 새 컨테이너라 매번 설치가 다시 됩니다 — 수십 초
+정도 걸립니다).
 
 컨테이너 안에 직접 들어가서 확인하고 싶다면:
 ```bash
@@ -104,10 +116,12 @@ python3 scripts/evaluate.py \
   --out results
 ```
 
-결과:
-- `results/trajectory_3d.png` — GT + VINS-Mono + VINS-Mono+LC 3D 궤적 비교
-- `results/vins_mono_ape.png`, `results/vins_mono_lc_ape.png` — 절대 위치 오차(APE) 시각화
-- `results/vins_mono_rpe.png`, `results/vins_mono_lc_rpe.png` — 상대 위치 오차(RPE) 시각화
+결과 (evo가 그래프 종류별로 파일을 나눠 저장합니다):
+- `results/trajectory_3d_trajectories.png` — **GT + VINS-Mono + VINS-Mono+LC 3D 궤적 비교** (메인 그래프)
+- `results/trajectory_3d_{xyz,rpy,speeds}.png` — 위치/자세/속도의 시간에 따른 변화 (보조 그래프)
+- `results/vins_mono{,_lc}_ape_map.png` — 절대 위치 오차(APE), 궤적 위에 오차 크기를 색으로 표시
+- `results/vins_mono{,_lc}_ape_raw.png` — APE 시간에 따른 변화 그래프
+- `results/vins_mono{,_lc}_rpe_{map,raw}.png` — 상대 위치 오차(RPE) 버전
 - `results/*.zip` — evo의 raw 결과 (stats.json 포함)
 - `results/summary.csv` — 두 방식의 APE/RPE RMSE·mean·median·std 요약 비교표
 - `results/tum/*.tum` — VINS-Mono CSV를 TUM 포맷으로 변환한 중간 결과

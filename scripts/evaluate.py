@@ -37,9 +37,26 @@ import pandas as pd
 VINS_CSV_COLUMNS = ["t_ns", "tx", "ty", "tz", "qw", "qx", "qy", "qz", "vx", "vy", "vz"]
 
 
+def force_headless_plot_backend() -> None:
+    """We only ever save plots to file (--save_plot), never show them (-p).
+
+    evo picks its matplotlib backend from its own persistent config
+    (~/.evo/settings.json, default "TkAgg") rather than the MPLBACKEND env
+    var, so on a headless server -- or any machine without a working Tk
+    install -- it crashes even though nothing is actually displayed. Force
+    it to the non-interactive Agg backend once, up front.
+    """
+    subprocess.run(["evo_config", "set", "plot_backend", "Agg"], check=True)
+
+
 def vins_csv_to_tum(csv_path: Path, tum_path: Path) -> None:
     """Convert VINS-Mono's native output CSV to a TUM trajectory file."""
-    df = pd.read_csv(csv_path, header=None, names=VINS_CSV_COLUMNS)
+    # VINS-Mono writes a trailing comma at the end of every row (one extra
+    # empty field beyond the 11 named ones). Without index_col=False, pandas
+    # silently treats the first field (t_ns) as a row index instead of data,
+    # shifting every other column over by one -- pass it explicitly to avoid
+    # that.
+    df = pd.read_csv(csv_path, header=None, names=VINS_CSV_COLUMNS, index_col=False)
     tum = pd.DataFrame({
         "t": df["t_ns"] / 1e9,
         "tx": df["tx"],
@@ -74,6 +91,8 @@ def main() -> int:
     ap.add_argument("--out", type=Path, default=Path("results"), help="output directory")
     ap.add_argument("--t-max-diff", type=float, default=0.02, help="max timestamp diff (s) for GT association")
     args = ap.parse_args()
+
+    force_headless_plot_backend()
 
     args.out.mkdir(parents=True, exist_ok=True)
     tum_dir = args.out / "tum"
