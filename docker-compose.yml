@@ -1,0 +1,17 @@
+services:
+  vins-mono:
+    build:
+      context: ./vins_ws/VINS-Mono
+      dockerfile: docker/Dockerfile
+    image: vins-mono:latest
+    volumes:
+      - ./data:/root/data:ro
+      - ./config:/root/config:ro
+      - ./scripts:/root/scripts:ro
+      - ./output:/root/output
+    stdin_open: true
+    tty: true
+    # Default: drop into a shell. Run the estimator with:
+    #   docker compose run vins-mono bash /root/scripts/run_vins.sh no_loop
+    #   docker compose run vins-mono bash /root/scripts/run_vins.sh loop
+    command: bash
