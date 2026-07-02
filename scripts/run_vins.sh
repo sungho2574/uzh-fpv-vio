@@ -68,6 +68,12 @@ if ! python2 -c "import matplotlib" 2>/dev/null; then
     if ! command -v pip >/dev/null 2>&1; then
         apt-get update -qq && apt-get install -y -qq python-pip >/dev/null
     fi
+    # The container's stock pip is ancient (Ubuntu 16.04) and doesn't honor
+    # newer packages' python_requires metadata, so it happily fetches
+    # py3-only releases of matplotlib's own deps (e.g. kiwisolver) and fails
+    # to build them. Upgrade pip itself to the last version with Python 2
+    # support first so dependency resolution picks compatible versions.
+    pip install --quiet --upgrade "pip==20.3.4"
     pip install --quiet matplotlib==2.2.5 "numpy<1.17"
 fi
 
