@@ -14,7 +14,7 @@ data/
   indoor_forward_9_davis_with_gt.bag             # git-lfs로 추적 (repo에 포함됨)
   indoor_forward_9_davis_with_gt/                # bag을 풀어놓은 사본 (git 추적 안 함, .gitignore)
     groundtruth.txt                              # evaluate.py가 이 파일을 사용함
-vins_ws/VINS-Mono/                     # VINS-Mono 공식 저장소 (git 추적 안 함, 아래 0번 참고)
+vins_ws/VINS-Mono/                     # VINS-Mono 공식 저장소 (git submodule, 아래 0번 참고)
   docker/Dockerfile                    # 공식 Dockerfile (ros:kinetic-perception, Ceres 1.12.0), 수정 안 함
 config/
   uzh_fpv_davis_no_loop.yaml           # VINS-Mono (loop_closure: 0)
@@ -27,15 +27,17 @@ output/                                # (자동 생성, git 추적 안 함) VIN
 results/                               # (자동 생성, git 추적 안 함) 3D 궤적 그래프, 오차 요약 CSV
 ```
 
-`vins_ws/VINS-Mono/`와 `data/indoor_forward_9_davis_with_gt/`(ASCII 사본)는
-용량이 커서 git에 올리지 않습니다 (전자는 외부 저장소 clone, 후자는 `.bag`
-안에 이미 들어있는 내용의 중복이라 `events.txt`만 960MB에 달합니다).
-새로 clone한 서버에서는 최초 1회 아래처럼 준비하세요:
+`vins_ws/VINS-Mono/`는 git submodule로 연결되어 있고, `data/indoor_forward_9_davis_with_gt/`
+(ASCII 사본)는 `.bag` 안에 이미 들어있는 내용의 중복이라(`events.txt`만
+960MB) git 추적에서 제외했습니다. 새로 clone한 서버에서는 최초 1회 아래처럼
+준비하세요:
 
 ## 0. 최초 설정 (새로 clone한 서버에서)
 
 ```bash
-git clone https://github.com/HKUST-Aerial-Robotics/VINS-Mono.git vins_ws/VINS-Mono
+git clone --recurse-submodules https://github.com/sungho2574/uzh-fpv-vio.git
+# 이미 --recurse-submodules 없이 clone했다면:
+git submodule update --init --recursive
 ```
 
 `data/indoor_forward_9_davis_with_gt/groundtruth.txt`는 evaluate.py 실행에

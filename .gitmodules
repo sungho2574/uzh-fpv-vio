@@ -1,0 +1,3 @@
+[submodule "vins_ws/VINS-Mono"]
+	path = vins_ws/VINS-Mono
+	url = https://github.com/HKUST-Aerial-Robotics/VINS-Mono.git
